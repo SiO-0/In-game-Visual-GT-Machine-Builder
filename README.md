@@ -42,6 +42,16 @@ gradlew build
 gradlew runClient
 ```
 
+### 构建产物
+
+| 产物 | 用途 |
+| --- | --- |
+| `build/libs/ivgtmb-<version>.jar` | **发布/安装用**，已 reobfuscate 为 SRG 名称，可放入正式实例的 `mods/` |
+| `build/libs/ivgtmb-<version>-dev.jar` | 开发命名空间（MCP）产物，仅供调试参考，**不要**放进正式实例 |
+
+> 注意：RetroFuturaGradle 中 `jar` 任务只产出开发命名空间的 jar，必须经过 `reobfJar` 才能在正式环境中运行，否则一旦调用到原版/Forge 成员就会抛出 `NoSuchMethodError`（例如 `ClientCommandHandler.registerCommand`）。
+> 本项目已让 `assemble`（`gradlew build`）自动依赖 `reobfJar`；也可单独执行 `gradlew reobfJar`。
+
 > 提示：本机专属的 Gradle 设置（JDK 安装路径、JVM 参数等）不提交到仓库，请按需写入用户级文件 `<USER_HOME>/.gradle/gradle.properties`。
 
 ## 许可

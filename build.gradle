@@ -219,16 +219,31 @@ jar {
         if (propertyBool('use_access_transformer')) {
             attribute_map['FMLAT'] = propertyString('access_transformer_locations')
         }
-        def mixinConfigs = propertyStringList('mixin_configs')
-        if (!mixinConfigs.isEmpty()) {
-            attribute_map['MixinConfigs'] = mixinConfigs.join(',')
-        }
-        def mixinConnectorClass = propertyString('mixin_connector_class')
-        if (!mixinConnectorClass.isEmpty()) {
-            attribute_map['MixinConnector'] = mixinConnectorClass
+        // Only advertise mixin configs / connectors when mixins are actually enabled.
+        // Otherwise the manifest points at a config resource that is never packaged
+        // (mixin_configs is a non-empty default), making Mixin fail at startup with:
+        // "The specified resource 'mixins.<mod_id>.json' was invalid or could not be read"
+        if (propertyBool('use_mixins')) {
+            def mixinConfigs = propertyStringList('mixin_configs')
+            if (!mixinConfigs.isEmpty()) {
+                attribute_map['MixinConfigs'] = mixinConfigs.join(',')
+            }
+            def mixinConnectorClass = propertyString('mixin_connector_class')
+            if (!mixinConnectorClass.isEmpty()) {
+                attribute_map['MixinConnector'] = mixinConnectorClass
+            }
         }
         attributes(attribute_map)
     }
+}
+
+// `jar` only packages classes in the dev (MCP) namespace, so vanilla/Forge members it
+// references are named like `ClientCommandHandler.registerCommand`. Those names do not
+// exist in the SRG-namespaced classes of a production instance, which leads to
+// NoSuchMethodError as soon as such a call is executed. Always assemble the reobfuscated
+// (`build/libs/<mod_id>-<version>.jar`) artifact.
+tasks.named('assemble').configure {
+    dependsOn 'reobfJar'
 }
 
 idea {
